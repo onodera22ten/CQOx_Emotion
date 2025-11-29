@@ -6,11 +6,11 @@ import { TraitSettingsPage } from "@/pages/emotion/TraitSettingsPage";
 import { AboutPage } from "@/pages/emotion/AboutPage";
 
 const navItems = [
+  { to: "/emotion/about", label: "About" },
   { to: "/emotion/create", label: "Episode Draft" },
   { to: "/emotion/outcome", label: "Outcome Log" },
   { to: "/emotion/dashboard", label: "Dashboard" },
   { to: "/emotion/settings", label: "Settings" },
-  { to: "/emotion/about", label: "About" },
 ];
 
 function App() {
