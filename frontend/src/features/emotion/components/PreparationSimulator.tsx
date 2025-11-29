@@ -51,6 +51,14 @@ export const PreparationSimulator: React.FC<Props> = ({
   preSpeechBlockRisk,
   preferences,
 }) => {
+  const defaultDate = new Date();
+  defaultDate.setHours(defaultDate.getHours() + 1);
+  const [scenarioDetails, setScenarioDetails] = useState({
+    scenarioType: "other",
+    topic: "",
+    scheduledAt: defaultDate.toISOString().slice(0, 16),
+    location: "online",
+  });
   const [preparations, setPreparations] = useState({
     journaling: 0,
     threeMessages: 0,
@@ -80,12 +88,23 @@ export const PreparationSimulator: React.FC<Props> = ({
     },
   });
 
+  const handleScenarioChange = (field: keyof typeof scenarioDetails) => (value: string) => {
+    setScenarioDetails((prev) => ({ ...prev, [field]: value }));
+  };
+
   const handleSavePlan = () => {
+    const topic = scenarioDetails.topic.trim() || "未設定";
+    const location = scenarioDetails.location.trim() || "online";
+    const parsedDate = new Date(scenarioDetails.scheduledAt);
+    const scheduledAt = Number.isNaN(parsedDate.getTime())
+      ? new Date().toISOString()
+      : parsedDate.toISOString();
+
     const payload = {
-      scenario_type: "other",  // TODO: Let user select scenario type
-      topic: "",  // Optional
-      scheduled_at: null,
-      location: null,
+      scenario_type: scenarioDetails.scenarioType,
+      topic,
+      scheduled_at: scheduledAt,
+      location,
       pre_state: {
         pre_anxiety: preAnxiety,
         pre_crying_risk: preCryingRisk,
@@ -160,13 +179,60 @@ export const PreparationSimulator: React.FC<Props> = ({
 
   return (
     <div className="space-y-6 p-4 bg-white rounded-lg shadow-md border border-gray-200">
-      <div className="border-b pb-3">
+      <div className="border-b pb-3 space-y-3">
         <h3 className="text-lg font-semibold text-gray-800">
           📊 準備プランのシミュレーション
         </h3>
         <p className="text-xs text-gray-500 mt-1">
           準備スライダーを動かして、結果の予測を見てみましょう
         </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50 rounded-lg p-3 text-sm">
+          <div>
+            <label className="block text-gray-600 mb-1">シナリオタイプ</label>
+            <select
+              value={scenarioDetails.scenarioType}
+              onChange={(e) => handleScenarioChange("scenarioType")(e.target.value)}
+              className="w-full border rounded-md px-2 py-1"
+            >
+              <option value="interview">面接 / 評価</option>
+              <option value="one_on_one">1on1</option>
+              <option value="partner">パートナー</option>
+              <option value="family">家族</option>
+              <option value="friend">友人</option>
+              <option value="client">クライアント</option>
+              <option value="other">その他</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-gray-600 mb-1">トピック</label>
+            <input
+              type="text"
+              value={scenarioDetails.topic}
+              onChange={(e) => handleScenarioChange("topic")(e.target.value)}
+              placeholder="例: 評価面談のフィードバック"
+              className="w-full border rounded-md px-2 py-1"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-600 mb-1">予定日時</label>
+            <input
+              type="datetime-local"
+              value={scenarioDetails.scheduledAt}
+              onChange={(e) => handleScenarioChange("scheduledAt")(e.target.value)}
+              className="w-full border rounded-md px-2 py-1"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-600 mb-1">場所 / チャンネル</label>
+            <input
+              type="text"
+              value={scenarioDetails.location}
+              onChange={(e) => handleScenarioChange("location")(e.target.value)}
+              placeholder="オンライン / オフィス / カフェ など"
+              className="w-full border rounded-md px-2 py-1"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Preparation Sliders */}

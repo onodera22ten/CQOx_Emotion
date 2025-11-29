@@ -13,7 +13,19 @@ export async function apiFetch<T>(path: string, options: Options = {}): Promise<
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.detail || `Request failed with status ${response.status}`);
+    let detailMessage: string | undefined;
+    if (typeof body.detail === "string") {
+      detailMessage = body.detail;
+    } else if (Array.isArray(body.detail)) {
+      detailMessage = body.detail
+        .map((item) => {
+          if (typeof item === "string") return item;
+          if (item?.msg) return item.msg;
+          return JSON.stringify(item);
+        })
+        .join("; ");
+    }
+    throw new Error(detailMessage || `Request failed with status ${response.status}`);
   }
 
   return response.json() as Promise<T>;
