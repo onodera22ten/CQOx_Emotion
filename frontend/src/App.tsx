@@ -1,15 +1,16 @@
-import React from "react";
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from "react-router-dom";
 import { EmotionEpisodeCreatePage } from "@/pages/emotion/EmotionEpisodeCreatePage";
 import { EmotionOutcomeLogPage } from "@/pages/emotion/EmotionOutcomeLogPage";
 import { EmotionDashboardPage } from "@/pages/emotion/EmotionDashboardPage";
 import { TraitSettingsPage } from "@/pages/emotion/TraitSettingsPage";
+import { AboutPage } from "@/pages/emotion/AboutPage";
 
 const navItems = [
   { to: "/emotion/create", label: "Episode Draft" },
   { to: "/emotion/outcome", label: "Outcome Log" },
   { to: "/emotion/dashboard", label: "Dashboard" },
   { to: "/emotion/settings", label: "Settings" },
+  { to: "/emotion/about", label: "About" },
 ];
 
 function App() {
@@ -20,11 +21,9 @@ function App() {
           <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Emotion CQOx</h1>
-              <p className="text-sm text-gray-500">
-                感情の波を「データと因果」で理解する Episode ログ
-              </p>
+              <p className="text-sm text-gray-500">感情の波を「データと因果」で理解する Episode ログ</p>
             </div>
-            <nav className="flex gap-3">
+            <nav className="flex gap-3 flex-wrap">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -48,6 +47,7 @@ function App() {
             <Route path="/emotion/outcome" element={<EmotionOutcomeLogPage />} />
             <Route path="/emotion/dashboard" element={<EmotionDashboardPage />} />
             <Route path="/emotion/settings" element={<TraitSettingsPage />} />
+            <Route path="/emotion/about" element={<AboutPage />} />
           </Routes>
         </main>
         <footer className="bg-white border-t text-center py-6 text-sm text-gray-500">

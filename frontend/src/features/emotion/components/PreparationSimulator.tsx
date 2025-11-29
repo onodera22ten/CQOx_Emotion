@@ -9,17 +9,6 @@ import React, { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiFetch } from "@/api/client";
 
-type SimulationRequest = {
-  preAnxiety: number;
-  preCryingRisk: number;
-  preSpeechBlockRisk: number;
-  prepJournaling10m: number;
-  prepThreeMessages: number;
-  prepBreathing478: number;
-  prepRoleplaySelfQa: number;
-  prepSafeWordPlan: number;
-};
-
 type DeltaMetric = {
   mean: number;
   ci95: [number, number];
@@ -45,6 +34,12 @@ type Props = {
   };
   evalThreat: number;
   suppressIntent: number;
+  context: {
+    partnerRole: string;
+    formality: number;
+    disclosure: number;
+    evalFocus: number;
+  };
 };
 
 export const PreparationSimulator: React.FC<Props> = ({
@@ -54,6 +49,7 @@ export const PreparationSimulator: React.FC<Props> = ({
   preferences,
   evalThreat,
   suppressIntent,
+  context,
 }) => {
   const defaultDate = new Date();
   defaultDate.setHours(defaultDate.getHours() + 1);
@@ -77,9 +73,31 @@ export const PreparationSimulator: React.FC<Props> = ({
   const [savedEpisodeId, setSavedEpisodeId] = useState<number | null>(null);
 
   // Mutation for saving episode draft
-  const saveEpisodeDraftMutation = useMutation({
-    mutationFn: async (payload: any) =>
-      apiFetch("/api/emotion/episodes/draft", {
+  type DraftPayload = {
+    scenario_type: string;
+    topic: string;
+    scheduled_at: string;
+    location: string;
+    pre_state: { pre_anxiety: number; pre_crying_risk: number; pre_speech_block_risk: number };
+    preparations_planned: {
+      journaling_10m: number;
+      three_messages: number;
+      breathing_4_7_8: number;
+      roleplay_self_qa: number;
+      safe_word_plan: number;
+    };
+    preference_weights_raw: { relief: number; expression: number; relationship: number };
+    eval_threat_level: number;
+    suppress_intent_level: number;
+    context_partner_role: string;
+    context_formality: number;
+    context_self_disclosure: number;
+    context_eval_focus: number;
+  };
+
+  const saveEpisodeDraftMutation = useMutation<{ episode_id: number; message: string }, Error, DraftPayload>({
+    mutationFn: async (payload) =>
+      apiFetch<{ episode_id: number; message: string }>("/api/emotion/episodes/draft", {
         method: "POST",
         body: JSON.stringify(payload),
       }),
@@ -96,15 +114,12 @@ export const PreparationSimulator: React.FC<Props> = ({
     setScenarioDetails((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSavePlan = () => {
+  const buildPayload = (): DraftPayload => {
     const topic = scenarioDetails.topic.trim() || "未設定";
     const location = scenarioDetails.location.trim() || "online";
     const parsedDate = new Date(scenarioDetails.scheduledAt);
-    const scheduledAt = Number.isNaN(parsedDate.getTime())
-      ? new Date().toISOString()
-      : parsedDate.toISOString();
-
-    const payload = {
+    const scheduledAt = Number.isNaN(parsedDate.getTime()) ? new Date().toISOString() : parsedDate.toISOString();
+    return {
       scenario_type: scenarioDetails.scenarioType,
       topic,
       scheduled_at: scheduledAt,
@@ -128,8 +143,15 @@ export const PreparationSimulator: React.FC<Props> = ({
       },
       eval_threat_level: evalThreat,
       suppress_intent_level: suppressIntent,
+      context_partner_role: context.partnerRole,
+      context_formality: context.formality,
+      context_self_disclosure: context.disclosure,
+      context_eval_focus: context.evalFocus,
     };
+  };
 
+  const handleSavePlan = () => {
+    const payload = buildPayload();
     saveEpisodeDraftMutation.mutate(payload);
   };
 

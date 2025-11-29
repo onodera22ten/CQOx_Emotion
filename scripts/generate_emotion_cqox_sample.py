@@ -65,6 +65,8 @@ def generate_rows(n_rows: int, seed: int = 42) -> pd.DataFrame:
         "unknown",
     ]
 
+    partner_roles = ["面接官", "上司", "同僚", "クライアント", "家族", "友人", "恋人", "医師・カウンセラー", "その他"]
+
     reflection_templates = [
         "少し泣いたけど言いたいことは伝えられた。",
         "ほとんど話せずに終わってしまった。次は準備を変えたい。",
@@ -292,6 +294,13 @@ def generate_rows(n_rows: int, seed: int = 42) -> pd.DataFrame:
         def intensity_or_empty(key: str) -> str | int:
             return prep_intensities[key] if prep_intensities[key] > 0 else ""
 
+        partner_role = random.choice(partner_roles)
+        formality = int(round(clipped_normal(6 if scenario_type in ["interview", "client"] else 4, 2, 0, 10)))
+        disclosure = int(round(clipped_normal(5 if scenario_type in ["partner", "family", "friend"] else 3, 2, 0, 10)))
+        eval_focus = int(round(clipped_normal(5, 2.5, 0, 10)))
+        eval_threat = int(round(clipped_normal(base_anxiety + formality / 5, 1.5, 0, 10)))
+        suppress_intent = int(round(clipped_normal(5 + formality / 4, 1.5, 0, 10)))
+
         row = {
             "episode_id": episode_id,
             "user_id": user_id,
@@ -303,6 +312,12 @@ def generate_rows(n_rows: int, seed: int = 42) -> pd.DataFrame:
             "pre_anxiety": pre_anxiety,
             "pre_crying_risk": pre_crying_risk,
             "pre_speech_block_risk": pre_speech_block_risk,
+            "eval_threat_level": eval_threat,
+            "suppress_intent_level": suppress_intent,
+            "context_partner_role": partner_role,
+            "context_formality": formality,
+            "context_self_disclosure": disclosure,
+            "context_eval_focus": eval_focus,
             "prep_journaling_10m_intensity": intensity_or_empty("journaling_10m"),
             "prep_three_messages_intensity": intensity_or_empty("three_messages"),
             "prep_breathing_4_7_8_intensity": intensity_or_empty("breathing_4_7_8"),

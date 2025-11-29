@@ -105,6 +105,10 @@ def create_episode_draft(db: Session, user_id: int, draft: schemas.EpisodeDraftC
         pre_speech_block_risk=draft.pre_state.pre_speech_block_risk,
         eval_threat_level=draft.eval_threat_level,
         suppress_intent_level=draft.suppress_intent_level,
+        context_partner_role=draft.context_partner_role,
+        context_formality=draft.context_formality,
+        context_self_disclosure=draft.context_self_disclosure,
+        context_eval_focus=draft.context_eval_focus,
     )
     db.add(episode)
     db.flush()
@@ -372,3 +376,106 @@ def get_path_summary(db: Session, user_id: int) -> schemas.PathSummaryRead:
     if not summary:
         raise ValueError("Path summary not available yet")
     return schemas.PathSummaryRead.model_validate(summary)
+
+
+def get_partner_path_summaries(db: Session, user_id: int) -> List[schemas.PartnerPathSummary]:
+    rows = (
+        db.query(models.EmotionPathPartnerSummary)
+        .filter_by(user_id=user_id)
+        .order_by(models.EmotionPathPartnerSummary.n_episodes.desc())
+        .all()
+    )
+    return [schemas.PartnerPathSummary.model_validate(r) for r in rows]
+
+
+def _episode_mean_stats(db: Session, user_id: int) -> dict[str, float]:
+    result = (
+        db.query(
+            func.avg(models.EmotionEpisode.eval_threat_level),
+            func.avg(models.EmotionEpisode.pre_anxiety),
+            func.avg(models.EmotionEpisode.suppress_intent_level),
+        )
+        .filter(models.EmotionEpisode.user_id == user_id)
+        .first()
+    )
+    mean_eval = result[0] or 0.0
+    mean_stress = result[1] or 0.0
+    mean_suppress = result[2] or 0.0
+    return {"E": mean_eval, "S": mean_stress, "R": mean_suppress}
+
+
+def _preparation_contribution(db: Session, user_id: int, episode: models.EmotionEpisode) -> float:
+    effects = (
+        db.query(models.EmotionTreatmentEffect)
+        .filter_by(user_id=user_id, outcome_name="crying_level")
+        .all()
+    )
+    effect_map = {eff.treatment_key: eff.ate for eff in effects}
+    total = 0.0
+    for prep in episode.preparations:
+        intensity = prep.actual_intensity or prep.planned_intensity or 0
+        ate = effect_map.get(prep.template_key)
+        if ate is None:
+            continue
+        total += ate * (intensity / 10.0)
+    return total
+
+
+def decompose_episode(
+    db: Session,
+    user_id: int,
+    episode_id: int,
+) -> schemas.EpisodeDecompositionRead:
+    episode = (
+        db.query(models.EmotionEpisode)
+        .filter(models.EmotionEpisode.id == episode_id, models.EmotionEpisode.user_id == user_id)
+        .first()
+    )
+    if not episode:
+        raise ValueError("Episode not found")
+    outcome = db.query(models.EmotionOutcome).filter_by(episode_id=episode_id).first()
+    if not outcome:
+        raise ValueError("Episode outcome missing")
+
+    summary = db.query(models.EmotionPathSummary).filter_by(user_id=user_id).first()
+    if not summary:
+        raise ValueError("Path summary not available")
+    trait_profile = db.query(models.EmotionTraitProfile).filter_by(user_id=user_id).first()
+    trait_value = trait_profile.trait_crying_proneness if trait_profile else 5
+
+    stats = _episode_mean_stats(db, user_id)
+    intercept = summary.intercept or 0.0
+    beta_eval = summary.beta_eval_to_cry or 0.0
+    beta_stress = summary.beta_stress_to_cry or 0.0
+    beta_suppress = summary.beta_suppress_to_cry or 0.0
+    beta_trait = summary.beta_trait_to_cry or 0.0
+
+    baseline = (
+        intercept
+        + beta_eval * stats["E"]
+        + beta_stress * stats["S"]
+        + beta_suppress * stats["R"]
+        + beta_trait * trait_value
+    )
+    contrib_eval = beta_eval * ((episode.eval_threat_level or stats["E"]) - stats["E"])
+    contrib_stress = beta_stress * ((episode.pre_anxiety or stats["S"]) - stats["S"])
+    contrib_suppress = beta_suppress * ((episode.suppress_intent_level or stats["R"]) - stats["R"])
+    contrib_trait = beta_trait * trait_value
+    contrib_prep = _preparation_contribution(db, user_id, episode)
+
+    predicted = baseline + contrib_eval + contrib_stress + contrib_suppress + contrib_prep
+
+    return schemas.EpisodeDecompositionRead(
+        episode_id=episode_id,
+        observed_crying=outcome.crying_level,
+        predicted_crying=predicted,
+        baseline_crying=baseline,
+        contrib_trait=contrib_trait,
+        contrib_eval_threat=contrib_eval,
+        contrib_stress=contrib_stress,
+        contrib_suppress=contrib_suppress,
+        contrib_preparations=contrib_prep,
+        beta_eval_to_cry=beta_eval,
+        beta_stress_to_cry=beta_stress,
+        beta_suppress_to_cry=beta_suppress,
+    )

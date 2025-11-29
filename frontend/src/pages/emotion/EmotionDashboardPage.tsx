@@ -5,31 +5,26 @@ import { CausalEffectForestChart, EffectDatum } from "@/features/emotion/compone
 import { EmotionTimelineChart, TimelinePoint } from "@/features/emotion/components/EmotionTimelineChart";
 import { EffectSummaryCards, SummaryStats } from "@/features/emotion/components/EffectSummaryCards";
 import { EvalToCryingPathCard, PathSummary } from "@/features/emotion/components/EvalToCryingPathCard";
+import { PartnerPathTable, PartnerPathRow } from "@/features/emotion/components/PartnerPathTable";
+import { EpisodeDecompositionCard, EpisodeDecomposition } from "@/features/emotion/components/EpisodeDecompositionCard";
 
-type EffectsResponse = {
-  effects: EffectDatum[];
-};
-
-type TimelineResponse = {
-  points: TimelinePoint[];
-};
+type EffectsResponse = { effects: EffectDatum[] };
+type TimelineResponse = { points: TimelinePoint[] };
+type EpisodeListItem = { id: number; topic: string; scenario_type: string; scheduled_at: string };
 
 export const EmotionDashboardPage: React.FC = () => {
   const summaryQuery = useQuery({
     queryKey: ["emotion", "dashboard", "summary"],
     queryFn: () => apiFetch<SummaryStats>("/api/emotion/dashboard/summary"),
   });
-
   const effectsQuery = useQuery({
     queryKey: ["emotion", "effects"],
     queryFn: () => apiFetch<EffectsResponse>("/api/emotion/effects/me"),
   });
-
   const timelineQuery = useQuery({
     queryKey: ["emotion", "timeline"],
     queryFn: () => apiFetch<TimelineResponse>("/api/emotion/episodes/timeline/me"),
   });
-
   const pathSummaryQuery = useQuery({
     queryKey: ["emotion", "path-summary"],
     queryFn: async () => {
@@ -37,19 +32,57 @@ export const EmotionDashboardPage: React.FC = () => {
         return await apiFetch<PathSummary>("/api/emotion/path-summary/me");
       } catch (error) {
         const err = error as Error & { status?: number };
-        if (err.status === 404) {
-          return null;
-        }
+        if (err.status === 404) return null;
         throw err;
       }
     },
   });
+  const partnerPathsQuery = useQuery({
+    queryKey: ["emotion", "partner-paths"],
+    queryFn: () => apiFetch<PartnerPathRow[]>("/api/emotion/paths/by-partner"),
+  });
+  const episodesQuery = useQuery({
+    queryKey: ["emotion", "episodes", "completed"],
+    queryFn: () => apiFetch<EpisodeListItem[]>("/api/emotion/episodes?status=completed&limit=100"),
+  });
+  const [selectedEpisode, setSelectedEpisode] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    if (!selectedEpisode && episodesQuery.data && episodesQuery.data.length > 0) {
+      setSelectedEpisode(episodesQuery.data[0].id);
+    }
+  }, [episodesQuery.data, selectedEpisode]);
+  const decompositionQuery = useQuery({
+    queryKey: ["emotion", "episode-decomposition", selectedEpisode],
+    queryFn: async () => {
+      if (!selectedEpisode) return null;
+      try {
+        return await apiFetch<EpisodeDecomposition>(`/api/emotion/episodes/${selectedEpisode}/decomposition`);
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!selectedEpisode,
+  });
 
-  if (summaryQuery.isLoading || effectsQuery.isLoading || timelineQuery.isLoading || pathSummaryQuery.isLoading) {
+  if (
+    summaryQuery.isLoading ||
+    effectsQuery.isLoading ||
+    timelineQuery.isLoading ||
+    pathSummaryQuery.isLoading ||
+    partnerPathsQuery.isLoading ||
+    episodesQuery.isLoading ||
+    decompositionQuery.isLoading
+  ) {
     return <div className="text-gray-500">読み込み中...</div>;
   }
-
-  if (summaryQuery.isError || effectsQuery.isError || timelineQuery.isError || pathSummaryQuery.isError) {
+  if (
+    summaryQuery.isError ||
+    effectsQuery.isError ||
+    timelineQuery.isError ||
+    pathSummaryQuery.isError ||
+    partnerPathsQuery.isError ||
+    episodesQuery.isError
+  ) {
     return <div className="text-red-500 text-sm">データの取得に失敗しました。</div>;
   }
 
@@ -57,6 +90,9 @@ export const EmotionDashboardPage: React.FC = () => {
   const timeline = timelineQuery.data?.points ?? [];
   const summary = summaryQuery.data as SummaryStats;
   const pathSummary = pathSummaryQuery.data ?? undefined;
+  const partnerRows = partnerPathsQuery.data ?? [];
+  const episodes = episodesQuery.data ?? [];
+  const decomposition = decompositionQuery.data ?? null;
 
   return (
     <div className="space-y-8">
@@ -65,8 +101,32 @@ export const EmotionDashboardPage: React.FC = () => {
         <p className="text-sm text-gray-500">因果推定の結果と時系列を一つの画面で振り返れます。</p>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <EvalToCryingPathCard data={pathSummary ?? undefined} />
+        <EvalToCryingPathCard data={pathSummary} />
         <EffectSummaryCards summary={summary} />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <PartnerPathTable rows={partnerRows} />
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">エピソードを選択</label>
+            <select
+              className="w-full border rounded-lg px-3 py-2 text-sm"
+              value={selectedEpisode ?? ""}
+              onChange={(e) => setSelectedEpisode(Number(e.target.value))}
+            >
+              {episodes.map((ep) => (
+                <option key={ep.id} value={ep.id}>
+                  #{ep.id} / {ep.topic} ({new Date(ep.scheduled_at).toLocaleDateString()})
+                </option>
+              ))}
+            </select>
+          </div>
+          {decomposition ? (
+            <EpisodeDecompositionCard data={decomposition} />
+          ) : (
+            <div className="border rounded-2xl p-4 shadow-sm bg-white text-sm text-gray-500">まだ分解できるエピソードがありません。</div>
+          )}
+        </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CausalEffectForestChart data={effects} outcomeName="crying_level" />
@@ -77,4 +137,4 @@ export const EmotionDashboardPage: React.FC = () => {
       <EmotionTimelineChart data={timeline} />
     </div>
   );
-};
+}

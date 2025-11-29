@@ -3,6 +3,7 @@ import { EpisodeQuickSliders } from "@/features/emotion/components/EpisodeQuickS
 import { PreferenceSliders } from "@/features/emotion/components/PreferenceSliders";
 import { PreparationSimulator } from "@/features/emotion/components/PreparationSimulator";
 import { EvaluationContextSliders } from "@/features/emotion/components/EvaluationContextSliders";
+import { EpisodeContextSection } from "@/features/emotion/components/EpisodeContextSection";
 
 export const EmotionEpisodeCreatePage: React.FC = () => {
   const [pre, setPre] = useState({
@@ -20,6 +21,13 @@ export const EmotionEpisodeCreatePage: React.FC = () => {
   const [evalContext, setEvalContext] = useState({
     evalThreat: 5,
     suppressIntent: 5,
+  });
+
+  const [episodeContext, setEpisodeContext] = useState({
+    partnerRole: "面接官",
+    formality: 5,
+    disclosure: 5,
+    evalFocus: 5,
   });
 
   return (
@@ -50,7 +58,7 @@ export const EmotionEpisodeCreatePage: React.FC = () => {
               onChange={setPrefs}
             />
           </section>
-          <section>
+          <section className="space-y-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Layer B+: 評価の怖さ</h2>
             <EvaluationContextSliders
               evalThreat={evalContext.evalThreat}
@@ -59,6 +67,16 @@ export const EmotionEpisodeCreatePage: React.FC = () => {
               onSuppressIntentChange={(v) =>
                 setEvalContext((prev) => ({ ...prev, suppressIntent: v }))
               }
+            />
+            <EpisodeContextSection
+              partnerRole={episodeContext.partnerRole}
+              formality={episodeContext.formality}
+              disclosure={episodeContext.disclosure}
+              evalFocus={episodeContext.evalFocus}
+              onPartnerRoleChange={(role) => setEpisodeContext((prev) => ({ ...prev, partnerRole: role }))}
+              onFormalityChange={(v) => setEpisodeContext((prev) => ({ ...prev, formality: v }))}
+              onDisclosureChange={(v) => setEpisodeContext((prev) => ({ ...prev, disclosure: v }))}
+              onEvalFocusChange={(v) => setEpisodeContext((prev) => ({ ...prev, evalFocus: v }))}
             />
           </section>
         </div>
@@ -71,6 +89,7 @@ export const EmotionEpisodeCreatePage: React.FC = () => {
             preferences={prefs}
             evalThreat={evalContext.evalThreat}
             suppressIntent={evalContext.suppressIntent}
+            context={episodeContext}
           />
         </section>
       </div>

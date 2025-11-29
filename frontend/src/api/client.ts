@@ -18,9 +18,11 @@ export async function apiFetch<T>(path: string, options: Options = {}): Promise<
       detailMessage = body.detail;
     } else if (Array.isArray(body.detail)) {
       detailMessage = body.detail
-        .map((item) => {
+        .map((item: unknown) => {
           if (typeof item === "string") return item;
-          if (item?.msg) return item.msg;
+          if (item && typeof item === "object" && "msg" in item && (item as { msg?: unknown }).msg) {
+            return String((item as { msg?: unknown }).msg);
+          }
           return JSON.stringify(item);
         })
         .join("; ");

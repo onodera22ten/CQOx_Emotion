@@ -105,6 +105,26 @@ def get_my_path_summary(
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
+@router.get("/paths/by-partner", response_model=list[schemas.PartnerPathSummary])
+def get_partner_paths(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    return service.get_partner_path_summaries(db, current_user["id"])
+
+
+@router.get("/episodes/{episode_id}/decomposition", response_model=schemas.EpisodeDecompositionRead)
+def get_episode_decomposition(
+    episode_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    try:
+        return service.decompose_episode(db, current_user["id"], episode_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @router.get("/episodes/timeline/me", response_model=schemas.TimelineResponse)
 def get_my_timeline(
     db: Session = Depends(get_db),

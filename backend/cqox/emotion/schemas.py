@@ -93,6 +93,10 @@ class EpisodeDraftCreate(BaseModel):
     preference_weights_raw: PreferenceWeightsRaw
     eval_threat_level: int = Field(..., ge=0, le=10)
     suppress_intent_level: int = Field(..., ge=0, le=10)
+    context_partner_role: Optional[str] = Field(None, max_length=32)
+    context_formality: Optional[int] = Field(None, ge=0, le=10)
+    context_self_disclosure: Optional[int] = Field(None, ge=0, le=10)
+    context_eval_focus: Optional[int] = Field(None, ge=0, le=10)
 
 
 class EpisodeDraftRead(BaseModel):
@@ -118,6 +122,10 @@ class EpisodeRead(BaseModel):
     pre_speech_block_risk: int
     eval_threat_level: Optional[int]
     suppress_intent_level: Optional[int]
+    context_partner_role: Optional[str]
+    context_formality: Optional[int]
+    context_self_disclosure: Optional[int]
+    context_eval_focus: Optional[int]
     created_at: datetime
     updated_at: datetime
 
@@ -289,11 +297,39 @@ class DashboardSummary(BaseModel):
 
 
 class PathSummaryRead(BaseModel):
+    intercept: Optional[float]
+    intercept_lo: Optional[float]
+    intercept_hi: Optional[float]
     alpha_eval_to_stress: Optional[float]
     beta_eval_to_cry: Optional[float]
     beta_stress_to_cry: Optional[float]
     beta_suppress_to_cry: Optional[float]
+    beta_trait_to_cry: Optional[float]
     indirect_eval_to_cry: Optional[float]
+    total_eval_to_cry: Optional[float]
+    beta_trait_to_cry_lo: Optional[float]
+    beta_trait_to_cry_hi: Optional[float]
+    alpha_eval_to_stress_lo: Optional[float]
+    alpha_eval_to_stress_hi: Optional[float]
+    beta_eval_to_cry_lo: Optional[float]
+    beta_eval_to_cry_hi: Optional[float]
+    beta_stress_to_cry_lo: Optional[float]
+    beta_stress_to_cry_hi: Optional[float]
+    beta_suppress_to_cry_lo: Optional[float]
+    beta_suppress_to_cry_hi: Optional[float]
+    indirect_eval_to_cry_lo: Optional[float]
+    indirect_eval_to_cry_hi: Optional[float]
+    total_eval_to_cry_lo: Optional[float]
+    total_eval_to_cry_hi: Optional[float]
+    n_episodes: int
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class PartnerPathSummary(BaseModel):
+    partner_role: str
     total_eval_to_cry: Optional[float]
     n_episodes: int
     updated_at: datetime
@@ -359,3 +395,23 @@ class CSVImportResponse(BaseModel):
     imported_count: int
     errors: List[str]
     warnings: List[str]
+
+
+# ---------------------------------------------------------------------------
+# Episode decomposition
+# ---------------------------------------------------------------------------
+
+
+class EpisodeDecompositionRead(BaseModel):
+    episode_id: int
+    observed_crying: float
+    predicted_crying: float
+    baseline_crying: float
+    contrib_trait: float
+    contrib_eval_threat: float
+    contrib_stress: float
+    contrib_suppress: float
+    contrib_preparations: float
+    beta_eval_to_cry: float
+    beta_stress_to_cry: float
+    beta_suppress_to_cry: float

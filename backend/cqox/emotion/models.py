@@ -72,6 +72,10 @@ class EmotionEpisode(Base):
     pre_speech_block_risk: Mapped[int] = mapped_column(Integer, nullable=False)
     eval_threat_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
     suppress_intent_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    context_partner_role: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    context_formality: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    context_self_disclosure: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    context_eval_focus: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -189,11 +193,45 @@ class EmotionPathSummary(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(Integer, unique=True, nullable=False)
+    intercept: Mapped[float | None] = mapped_column(Float, nullable=True)
+    intercept_lo: Mapped[float | None] = mapped_column(Float, nullable=True)
+    intercept_hi: Mapped[float | None] = mapped_column(Float, nullable=True)
     alpha_eval_to_stress: Mapped[float | None] = mapped_column(Float, nullable=True)
     beta_eval_to_cry: Mapped[float | None] = mapped_column(Float, nullable=True)
     beta_stress_to_cry: Mapped[float | None] = mapped_column(Float, nullable=True)
     beta_suppress_to_cry: Mapped[float | None] = mapped_column(Float, nullable=True)
+    beta_trait_to_cry: Mapped[float | None] = mapped_column(Float, nullable=True)
     indirect_eval_to_cry: Mapped[float | None] = mapped_column(Float, nullable=True)
+    total_eval_to_cry: Mapped[float | None] = mapped_column(Float, nullable=True)
+    beta_trait_to_cry_lo: Mapped[float | None] = mapped_column(Float, nullable=True)
+    beta_trait_to_cry_hi: Mapped[float | None] = mapped_column(Float, nullable=True)
+    alpha_eval_to_stress_lo: Mapped[float | None] = mapped_column(Float, nullable=True)
+    alpha_eval_to_stress_hi: Mapped[float | None] = mapped_column(Float, nullable=True)
+    beta_eval_to_cry_lo: Mapped[float | None] = mapped_column(Float, nullable=True)
+    beta_eval_to_cry_hi: Mapped[float | None] = mapped_column(Float, nullable=True)
+    beta_stress_to_cry_lo: Mapped[float | None] = mapped_column(Float, nullable=True)
+    beta_stress_to_cry_hi: Mapped[float | None] = mapped_column(Float, nullable=True)
+    beta_suppress_to_cry_lo: Mapped[float | None] = mapped_column(Float, nullable=True)
+    beta_suppress_to_cry_hi: Mapped[float | None] = mapped_column(Float, nullable=True)
+    indirect_eval_to_cry_lo: Mapped[float | None] = mapped_column(Float, nullable=True)
+    indirect_eval_to_cry_hi: Mapped[float | None] = mapped_column(Float, nullable=True)
+    total_eval_to_cry_lo: Mapped[float | None] = mapped_column(Float, nullable=True)
+    total_eval_to_cry_hi: Mapped[float | None] = mapped_column(Float, nullable=True)
+    n_episodes: Mapped[int] = mapped_column(Integer, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class EmotionPathPartnerSummary(Base):
+    """Partner-role specific evaluation path summary."""
+
+    __tablename__ = "emotion_path_partner_summary"
+    __table_args__ = (
+        UniqueConstraint("user_id", "partner_role", name="uq_path_partner"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    partner_role: Mapped[str] = mapped_column(String(32), nullable=False)
     total_eval_to_cry: Mapped[float | None] = mapped_column(Float, nullable=True)
     n_episodes: Mapped[int] = mapped_column(Integer, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
