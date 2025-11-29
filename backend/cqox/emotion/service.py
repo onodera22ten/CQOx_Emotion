@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Optional
 import logging
+import threading
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -17,6 +18,22 @@ from . import models, schemas
 from cqox.jobs.estimate_effects import estimate_and_persist_effects
 
 logger = logging.getLogger(__name__)
+_job_lock = threading.Lock()
+
+
+def _run_effect_job_async():
+    def worker():
+        try:
+            estimate_and_persist_effects()
+        except Exception:
+            logger.exception("Failed to run treatment effect estimation job")
+        finally:
+            _job_lock.release()
+
+    acquired = _job_lock.acquire(blocking=False)
+    if not acquired:
+        return
+    threading.Thread(target=worker, daemon=True).start()
 
 PREPARATION_TEMPLATE_KEYS = [
     "journaling_10m",
@@ -194,10 +211,7 @@ def record_outcome(db: Session, user_id: int, episode_id: int, outcome: schemas.
     db.commit()
     db.refresh(outcome_record)
 
-    try:
-        estimate_and_persist_effects()
-    except Exception:
-        logger.exception("Failed to run treatment effect estimation job")
+    _run_effect_job_async()
 
     return schemas.OutcomeRead.model_validate(outcome_record)
 
