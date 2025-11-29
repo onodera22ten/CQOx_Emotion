@@ -84,7 +84,7 @@ def dml_ate(
     3. Regress residualised y on residualised t
     """
     data = df.dropna(subset=[treatment_col, outcome_col] + confounder_cols)
-    if len(data) < 30:
+    if len(data) < 4:
         return {"ate": 0.0, "se": math.inf, "n_treated": 0, "n_control": 0}
 
     T = data[treatment_col].values.astype(float)
@@ -175,4 +175,3 @@ def estimate_and_persist_effects() -> None:
 
 if __name__ == "__main__":
     estimate_and_persist_effects()
-
