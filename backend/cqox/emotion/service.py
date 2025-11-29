@@ -16,17 +16,22 @@ from sqlalchemy.orm import Session
 
 from . import models, schemas
 from cqox.jobs.estimate_effects import estimate_and_persist_effects
+from cqox.jobs.estimate_paths import estimate_and_persist_paths
 
 logger = logging.getLogger(__name__)
 _job_lock = threading.Lock()
 
 
-def _run_effect_job_async():
+def _run_analytics_jobs_async():
     def worker():
         try:
             estimate_and_persist_effects()
         except Exception:
             logger.exception("Failed to run treatment effect estimation job")
+        try:
+            estimate_and_persist_paths()
+        except Exception:
+            logger.exception("Failed to run path estimation job")
         finally:
             _job_lock.release()
 
@@ -98,6 +103,8 @@ def create_episode_draft(db: Session, user_id: int, draft: schemas.EpisodeDraftC
         pre_anxiety=draft.pre_state.pre_anxiety,
         pre_crying_risk=draft.pre_state.pre_crying_risk,
         pre_speech_block_risk=draft.pre_state.pre_speech_block_risk,
+        eval_threat_level=draft.eval_threat_level,
+        suppress_intent_level=draft.suppress_intent_level,
     )
     db.add(episode)
     db.flush()
@@ -211,7 +218,7 @@ def record_outcome(db: Session, user_id: int, episode_id: int, outcome: schemas.
     db.commit()
     db.refresh(outcome_record)
 
-    _run_effect_job_async()
+    _run_analytics_jobs_async()
 
     return schemas.OutcomeRead.model_validate(outcome_record)
 
@@ -252,6 +259,43 @@ def update_preference_profile(
     db.commit()
     db.refresh(profile)
     return schemas.PreferenceProfileRead.model_validate(profile)
+
+
+def get_trait_profile(db: Session, user_id: int) -> schemas.TraitProfileRead:
+    profile = db.query(models.EmotionTraitProfile).filter_by(user_id=user_id).first()
+    if not profile:
+        profile = models.EmotionTraitProfile(
+            user_id=user_id,
+            trait_social_anxiety=5,
+            trait_crying_proneness=5,
+            trait_suppression=5,
+        )
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+    return schemas.TraitProfileRead.model_validate(profile)
+
+
+def update_trait_profile(
+    db: Session, user_id: int, payload: schemas.TraitProfileCreate
+) -> schemas.TraitProfileRead:
+    profile = db.query(models.EmotionTraitProfile).filter_by(user_id=user_id).first()
+    if profile:
+        profile.trait_social_anxiety = payload.trait_social_anxiety
+        profile.trait_crying_proneness = payload.trait_crying_proneness
+        profile.trait_suppression = payload.trait_suppression
+        profile.updated_at = datetime.utcnow()
+    else:
+        profile = models.EmotionTraitProfile(
+            user_id=user_id,
+            trait_social_anxiety=payload.trait_social_anxiety,
+            trait_crying_proneness=payload.trait_crying_proneness,
+            trait_suppression=payload.trait_suppression,
+        )
+        db.add(profile)
+    db.commit()
+    db.refresh(profile)
+    return schemas.TraitProfileRead.model_validate(profile)
 
 
 # ---------------------------------------------------------------------------
@@ -321,3 +365,10 @@ def get_dashboard_summary(db: Session, user_id: int) -> schemas.DashboardSummary
         total_completed=total_completed,
         total_planned=total_planned,
     )
+
+
+def get_path_summary(db: Session, user_id: int) -> schemas.PathSummaryRead:
+    summary = db.query(models.EmotionPathSummary).filter_by(user_id=user_id).first()
+    if not summary:
+        raise ValueError("Path summary not available yet")
+    return schemas.PathSummaryRead.model_validate(summary)

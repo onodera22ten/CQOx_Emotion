@@ -43,6 +43,8 @@ type Props = {
     expression: number;
     relationship: number;
   };
+  evalThreat: number;
+  suppressIntent: number;
 };
 
 export const PreparationSimulator: React.FC<Props> = ({
@@ -50,6 +52,8 @@ export const PreparationSimulator: React.FC<Props> = ({
   preCryingRisk,
   preSpeechBlockRisk,
   preferences,
+  evalThreat,
+  suppressIntent,
 }) => {
   const defaultDate = new Date();
   defaultDate.setHours(defaultDate.getHours() + 1);
@@ -122,6 +126,8 @@ export const PreparationSimulator: React.FC<Props> = ({
         expression: preferences.expression,
         relationship: preferences.relationship,
       },
+      eval_threat_level: evalThreat,
+      suppress_intent_level: suppressIntent,
     };
 
     saveEpisodeDraftMutation.mutate(payload);

@@ -94,6 +94,17 @@ def get_my_effects(
     return schemas.TreatmentEffectList(effects=effects)
 
 
+@router.get("/path-summary/me", response_model=schemas.PathSummaryRead)
+def get_my_path_summary(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    try:
+        return service.get_path_summary(db, current_user["id"])
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @router.get("/episodes/timeline/me", response_model=schemas.TimelineResponse)
 def get_my_timeline(
     db: Session = Depends(get_db),
@@ -117,6 +128,23 @@ def update_preferences(
     current_user=Depends(get_current_user),
 ):
     return service.update_preference_profile(db, current_user["id"], payload)
+
+
+@router.get("/traits/me", response_model=schemas.TraitProfileRead)
+def get_traits(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    return service.get_trait_profile(db, current_user["id"])
+
+
+@router.post("/traits/me", response_model=schemas.TraitProfileRead)
+def update_traits(
+    payload: schemas.TraitProfileCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    return service.update_trait_profile(db, current_user["id"], payload)
 
 
 @router.post("/safety/check", response_model=schemas.SafetyCheckResponse)

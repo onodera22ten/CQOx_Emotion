@@ -3,11 +3,13 @@ import { BrowserRouter, Routes, Route, NavLink, Navigate } from "react-router-do
 import { EmotionEpisodeCreatePage } from "@/pages/emotion/EmotionEpisodeCreatePage";
 import { EmotionOutcomeLogPage } from "@/pages/emotion/EmotionOutcomeLogPage";
 import { EmotionDashboardPage } from "@/pages/emotion/EmotionDashboardPage";
+import { TraitSettingsPage } from "@/pages/emotion/TraitSettingsPage";
 
 const navItems = [
   { to: "/emotion/create", label: "Episode Draft" },
   { to: "/emotion/outcome", label: "Outcome Log" },
   { to: "/emotion/dashboard", label: "Dashboard" },
+  { to: "/emotion/settings", label: "Settings" },
 ];
 
 function App() {
@@ -45,6 +47,7 @@ function App() {
             <Route path="/emotion/create" element={<EmotionEpisodeCreatePage />} />
             <Route path="/emotion/outcome" element={<EmotionOutcomeLogPage />} />
             <Route path="/emotion/dashboard" element={<EmotionDashboardPage />} />
+            <Route path="/emotion/settings" element={<TraitSettingsPage />} />
           </Routes>
         </main>
         <footer className="bg-white border-t text-center py-6 text-sm text-gray-500">

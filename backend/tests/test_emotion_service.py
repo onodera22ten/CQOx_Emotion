@@ -19,6 +19,8 @@ def sample_draft():
             safe_word_plan=0,
         ),
         preference_weights_raw=schemas.PreferenceWeightsRaw(relief=5, expression=4, relationship=1),
+        eval_threat_level=6,
+        suppress_intent_level=5,
     )
 
 

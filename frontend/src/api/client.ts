@@ -25,7 +25,11 @@ export async function apiFetch<T>(path: string, options: Options = {}): Promise<
         })
         .join("; ");
     }
-    throw new Error(detailMessage || `Request failed with status ${response.status}`);
+    const error = new Error(detailMessage || `Request failed with status ${response.status}`) as Error & {
+      status?: number;
+    };
+    error.status = response.status;
+    throw error;
   }
 
   return response.json() as Promise<T>;

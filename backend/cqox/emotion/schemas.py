@@ -91,6 +91,8 @@ class EpisodeDraftCreate(BaseModel):
     pre_state: PreState
     preparations_planned: PreparationPlan
     preference_weights_raw: PreferenceWeightsRaw
+    eval_threat_level: int = Field(..., ge=0, le=10)
+    suppress_intent_level: int = Field(..., ge=0, le=10)
 
 
 class EpisodeDraftRead(BaseModel):
@@ -114,6 +116,8 @@ class EpisodeRead(BaseModel):
     pre_anxiety: int
     pre_crying_risk: int
     pre_speech_block_risk: int
+    eval_threat_level: Optional[int]
+    suppress_intent_level: Optional[int]
     created_at: datetime
     updated_at: datetime
 
@@ -211,6 +215,28 @@ class PreferenceProfileRead(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Trait profiles
+# ---------------------------------------------------------------------------
+
+
+class TraitProfileCreate(BaseModel):
+    trait_social_anxiety: int = Field(..., ge=0, le=10)
+    trait_crying_proneness: int = Field(..., ge=0, le=10)
+    trait_suppression: int = Field(..., ge=0, le=10)
+
+
+class TraitProfileRead(BaseModel):
+    user_id: int
+    trait_social_anxiety: int
+    trait_crying_proneness: int
+    trait_suppression: int
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ---------------------------------------------------------------------------
 # Analytics / dashboard
 # ---------------------------------------------------------------------------
 
@@ -260,6 +286,17 @@ class DashboardSummary(BaseModel):
     total_episodes: int
     total_completed: int
     total_planned: int
+
+
+class PathSummaryRead(BaseModel):
+    alpha_eval_to_stress: Optional[float]
+    beta_eval_to_cry: Optional[float]
+    beta_stress_to_cry: Optional[float]
+    beta_suppress_to_cry: Optional[float]
+    indirect_eval_to_cry: Optional[float]
+    total_eval_to_cry: Optional[float]
+    n_episodes: int
+    updated_at: datetime
 
 
 # ---------------------------------------------------------------------------

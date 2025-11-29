@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { EpisodeQuickSliders } from "@/features/emotion/components/EpisodeQuickSliders";
 import { PreferenceSliders } from "@/features/emotion/components/PreferenceSliders";
 import { PreparationSimulator } from "@/features/emotion/components/PreparationSimulator";
+import { EvaluationContextSliders } from "@/features/emotion/components/EvaluationContextSliders";
 
 export const EmotionEpisodeCreatePage: React.FC = () => {
   const [pre, setPre] = useState({
@@ -14,6 +15,11 @@ export const EmotionEpisodeCreatePage: React.FC = () => {
     relief: 5,
     expression: 5,
     relationship: 5,
+  });
+
+  const [evalContext, setEvalContext] = useState({
+    evalThreat: 5,
+    suppressIntent: 5,
   });
 
   return (
@@ -44,6 +50,17 @@ export const EmotionEpisodeCreatePage: React.FC = () => {
               onChange={setPrefs}
             />
           </section>
+          <section>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Layer B+: 評価の怖さ</h2>
+            <EvaluationContextSliders
+              evalThreat={evalContext.evalThreat}
+              suppressIntent={evalContext.suppressIntent}
+              onEvalThreatChange={(v) => setEvalContext((prev) => ({ ...prev, evalThreat: v }))}
+              onSuppressIntentChange={(v) =>
+                setEvalContext((prev) => ({ ...prev, suppressIntent: v }))
+              }
+            />
+          </section>
         </div>
         <section>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Layer C: 準備プラン</h2>
@@ -52,6 +69,8 @@ export const EmotionEpisodeCreatePage: React.FC = () => {
             preCryingRisk={pre.preCryingRisk}
             preSpeechBlockRisk={pre.preSpeechBlockRisk}
             preferences={prefs}
+            evalThreat={evalContext.evalThreat}
+            suppressIntent={evalContext.suppressIntent}
           />
         </section>
       </div>

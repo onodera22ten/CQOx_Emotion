@@ -70,6 +70,8 @@ class EmotionEpisode(Base):
     pre_anxiety: Mapped[int] = mapped_column(Integer, nullable=False)
     pre_crying_risk: Mapped[int] = mapped_column(Integer, nullable=False)
     pre_speech_block_risk: Mapped[int] = mapped_column(Integer, nullable=False)
+    eval_threat_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    suppress_intent_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -167,3 +169,31 @@ class SafetyLog(Base):
     action_taken: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
+
+class EmotionTraitProfile(Base):
+    """User trait profile (baseline social anxiety / crying proneness / suppression)."""
+
+    __tablename__ = "emotion_trait_profile"
+
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    trait_social_anxiety: Mapped[int] = mapped_column(Integer, nullable=False)
+    trait_crying_proneness: Mapped[int] = mapped_column(Integer, nullable=False)
+    trait_suppression: Mapped[int] = mapped_column(Integer, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class EmotionPathSummary(Base):
+    """Persisted per-user path summary for evaluation -> crying model."""
+
+    __tablename__ = "emotion_path_summary"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, unique=True, nullable=False)
+    alpha_eval_to_stress: Mapped[float | None] = mapped_column(Float, nullable=True)
+    beta_eval_to_cry: Mapped[float | None] = mapped_column(Float, nullable=True)
+    beta_stress_to_cry: Mapped[float | None] = mapped_column(Float, nullable=True)
+    beta_suppress_to_cry: Mapped[float | None] = mapped_column(Float, nullable=True)
+    indirect_eval_to_cry: Mapped[float | None] = mapped_column(Float, nullable=True)
+    total_eval_to_cry: Mapped[float | None] = mapped_column(Float, nullable=True)
+    n_episodes: Mapped[int] = mapped_column(Integer, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
