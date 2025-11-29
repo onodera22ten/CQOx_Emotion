@@ -1,0 +1,3 @@
+"""
+Emotion CQOx Module
+"""

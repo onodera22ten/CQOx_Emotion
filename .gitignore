@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+.venv/
+env/
+venv/
+
+# Node / frontend
+node_modules/
+frontend/node_modules/
+.npm/
+.parcel-cache/
+dist/
+.vite/
+
+# OS/UI
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+.cursor/
+.history/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+
+# Misc
+*.log
