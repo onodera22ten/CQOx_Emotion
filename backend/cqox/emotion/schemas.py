@@ -298,6 +298,9 @@ class PathSummaryRead(BaseModel):
     n_episodes: int
     updated_at: datetime
 
+    class Config:
+        from_attributes = True
+
 
 # ---------------------------------------------------------------------------
 # Safety + simulation
