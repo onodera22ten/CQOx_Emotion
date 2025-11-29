@@ -250,8 +250,13 @@ class TimelineResponse(BaseModel):
     points: List[TimelinePoint]
 
 
+class PreparationCount(BaseModel):
+    template_key: str
+    count: int
+
+
 class DashboardSummary(BaseModel):
-    by_preparation: List[Dict[str, float]]
+    by_preparation: List[PreparationCount]
     total_episodes: int
     total_completed: int
     total_planned: int
@@ -314,4 +319,3 @@ class CSVImportResponse(BaseModel):
     imported_count: int
     errors: List[str]
     warnings: List[str]
-

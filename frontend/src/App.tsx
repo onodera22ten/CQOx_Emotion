@@ -13,7 +13,7 @@ const navItems = [
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-green-50">
         <header className="bg-white border-b">
           <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
