@@ -123,7 +123,7 @@ class AnalyticsEngine:
             else:
                 without_prep.append(ep)
 
-        if len(with_prep) < 3 or len(without_prep) < 3:
+        if len(with_prep) < 2 or len(without_prep) < 2:
             # Not enough data
             return None
 
@@ -175,6 +175,8 @@ class AnalyticsEngine:
             return ConfidenceLevel.HIGH
         elif min_n >= 10:
             return ConfidenceLevel.MEDIUM
+        elif min_n >= 2:
+            return ConfidenceLevel.LOW
         else:
             return ConfidenceLevel.LOW
 

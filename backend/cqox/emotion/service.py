@@ -8,11 +8,15 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import List, Optional
+import logging
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import models, schemas
+from cqox.jobs.estimate_effects import estimate_and_persist_effects
+
+logger = logging.getLogger(__name__)
 
 PREPARATION_TEMPLATE_KEYS = [
     "journaling_10m",
@@ -189,6 +193,12 @@ def record_outcome(db: Session, user_id: int, episode_id: int, outcome: schemas.
     episode.status = models.EpisodeStatus.COMPLETED
     db.commit()
     db.refresh(outcome_record)
+
+    try:
+        estimate_and_persist_effects()
+    except Exception:
+        logger.exception("Failed to run treatment effect estimation job")
+
     return schemas.OutcomeRead.model_validate(outcome_record)
 
 
@@ -297,4 +307,3 @@ def get_dashboard_summary(db: Session, user_id: int) -> schemas.DashboardSummary
         total_completed=total_completed,
         total_planned=total_planned,
     )
-
